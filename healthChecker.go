@@ -23,6 +23,7 @@ var (
 
 // Functions to perform health checks on servers
 
+// Parses a string URL and returns a pointer to a url object which is required by rev proxy's Director func
 func ParseURL(urlStr string) *url.URL {
 	u, _ := url.Parse(urlStr)
 	return u
@@ -31,10 +32,10 @@ func ParseURL(urlStr string) *url.URL {
 // Go routine to run health checks on a separate thread
 func RunHealthCheck() {
 	// Utilizes cron jobs to run checkServerHealth every 2 seconds
-	// Here we create a Cron Scheduler Object called s
+	// Here we create a Cron Scheduler Object from the gocron library
 	s := gocron.NewScheduler(time.Local)
 
-	// Looping syntax similar to Python
+	// We loop through every server URL and check each server's health
 	for idx, server := range ServerURLs {
 		// We want the scheduler to perform a given function, every 2 seconds
 		// The Do method takes a function as an argument which is where we will put checkServerHealth
@@ -48,7 +49,7 @@ func RunHealthCheck() {
 			}
 		})
 	}
-	// How to start the func, use "<-" if the function has a return value
+	// cmd to start the func, use "<-" syntax if the function has a return value
 	s.StartAsync()
 }
 
@@ -56,13 +57,15 @@ func CheckServerHealth(index int, server *url.URL) {
 	// We check server health by pinging the server and checking the response
 	resp, err := http.Get(server.String())
 
+	// Acquire a write lock to access HealthStatus atomically
 	Mu.Lock()
+	// Deferring delays the unlock until the function returns
 	defer Mu.Unlock()
-	
+
 	// If we don't get a 200, it means the server is offline, set the health status to false
 	if err != nil || resp.StatusCode != http.StatusOK {
 		HealthStatus[index] = false
-	// If we do get a 200, it means the server is online, set the health status to true
+		// If we do get a 200, it means the server is online, set the health status to true
 	} else {
 		HealthStatus[index] = true
 	}
@@ -72,7 +75,9 @@ func CheckServerHealth(index int, server *url.URL) {
 }
 
 func GetNextHealthyServer() *url.URL {
+	// Acquire a read lock to access HealthStatus atomically
 	Mu.RLock()
+	// Deferring delays the unlock until the function returns
 	defer Mu.RUnlock()
 
 	// Loop to find the next healthy server
@@ -82,5 +87,6 @@ func GetNextHealthyServer() *url.URL {
 		}
 	}
 	// Fallback: if all servers are unhealthy, return a default server or error
-	return ServerURLs[0]
+	log.Printf("Error")
+	return nil
 }
