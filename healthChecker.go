@@ -53,6 +53,7 @@ func RunHealthCheck() {
 	s.StartAsync()
 }
 
+// Pings each server to assess health status, updating shared state accordingly
 func CheckServerHealth(index int, server *url.URL) {
 	// We check server health by pinging the server and checking the response
 	resp, err := http.Get(server.String())

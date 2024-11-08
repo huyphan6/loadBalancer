@@ -31,6 +31,8 @@ func main() {
 // When a request comes to the reverse proxy, 
 // Director modifies it so that the request looks as if it was originally intended for the backend server. 
 // After the Director function makes its modifications, the proxy forwards the request to the appropriate target server.
+
+// Modifies requests so that they appear intended for the correct backend server before routing.
 func dynamicDirector(req *http.Request) {
 	// targetURL := getNextServer()
 	targetURL := GetNextHealthyServer()
